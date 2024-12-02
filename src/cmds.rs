@@ -5,11 +5,13 @@ use crate::settings::Settings;
 use crate::timestamps::*;
 
 pub(crate) fn cmd_now() {
+    let s = Settings::new().unwrap();
+
     let ts = Local::now();
 
     println!("Current time is: {}", ts.format_ts());
 
-    for tz_str in TIMEZONES.iter() {
+    for tz_str in s.timezones.iter() {
         let tz: Tz = tz_str.parse().unwrap();
         let converted_ts = ts.with_timezone(&tz);
 

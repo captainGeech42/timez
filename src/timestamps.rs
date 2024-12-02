@@ -13,9 +13,6 @@ const TZ_FSTR: &str = "%Y-%m-%d %H:%M:%S %Z";
 /// Format string for TZ-naive chrono timestamp objects.
 const NTZ_FSTR: &str = "%Y-%m-%d %H:%M:%S";
 
-/// List of timezones to show.
-pub(crate) const TIMEZONES: &[&str] = &["Europe/London", "America/Chicago", "Asia/Kabul"];
-
 impl TimestampString for DateTime<Utc> {
     fn format_ts(&self) -> String {
         return self.format(TZ_FSTR).to_string();

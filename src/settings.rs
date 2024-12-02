@@ -5,7 +5,7 @@ use serde::Deserialize;
 #[derive(Debug, Deserialize)]
 #[allow(unused)]
 pub(crate) struct Settings {
-    timezones: Vec<String>,
+    pub(crate) timezones: Vec<String>,
 }
 
 impl Settings {

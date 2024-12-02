@@ -1,1 +1,1 @@
-timezones = [ "Asia/Kabul" ]
+timezones = [ "Europe/London", "America/Chicago", "Asia/Kabul", "Asia/Chongqing" ]

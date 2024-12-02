@@ -1,6 +1,8 @@
 use chrono::{DateTime, Local, NaiveDateTime, TimeZone, Utc};
 use chrono_tz::{OffsetName, Tz};
 use clap::{Parser, Subcommand};
+use config::{Config, ConfigError, File};
+use serde::Deserialize;
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
@@ -11,8 +13,11 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Show the current time in the configured timezones
+    /// Show the current time in the configured timezones.
     Now,
+
+    /// Inspect the config file to confirm it is valid.
+    Validate,
 }
 
 trait TimestampString {
@@ -55,7 +60,7 @@ impl TimestampString for DateTime<Tz> {
             .offset_from_local_datetime(&self.naive_local())
             .unwrap();
 
-        // Not all timezones have an available abbreviation, so fallback to the hours delta (eg, `+0430`)
+        // Not all timezones have an abbreviation defined, so fallback to the hours delta (eg, `+0430`)
         // if an abbreviation isn't available.
         // Example: `Asia/Kabul`
         let abbr = match offset.abbreviation() {
@@ -80,13 +85,61 @@ fn cmd_now() {
     }
 }
 
+fn cmd_validate() {
+    let s = Settings::new().unwrap();
+
+    match s.validate() {
+        Ok(_) => {
+            println!("config is valid");
+        }
+        Err(e) => {
+            println!("config is invalid!");
+            println!("{e}");
+            std::process::exit(1);
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
+#[allow(unused)]
+struct Settings {
+    timezones: Vec<String>,
+}
+
+impl Settings {
+    fn new() -> Result<Settings, ConfigError> {
+        let s = Config::builder()
+            .add_source(File::with_name("timez"))
+            .build()?;
+
+        s.try_deserialize()
+    }
+
+    fn validate(&self) -> Result<(), String> {
+        // make sure that each timezone name is valid
+        for tz_str in self.timezones.iter() {
+            let tz = tz_str.parse::<Tz>();
+            match tz {
+                Ok(_) => {}
+                Err(e) => {
+                    return Err(format!(
+                        "the timezone string '{}' is not valid: {}",
+                        tz_str, e
+                    ))
+                }
+            }
+        }
+
+        Ok(())
+    }
+}
+
 fn main() {
     let cli = Cli::parse();
 
     match &cli.command {
-        Some(Commands::Now) => {
-            cmd_now();
-        }
+        Some(Commands::Now) => cmd_now(),
+        Some(Commands::Validate) => cmd_validate(),
         None => {}
     }
 }

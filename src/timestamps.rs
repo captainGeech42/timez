@@ -49,3 +49,74 @@ impl TimestampString for DateTime<Tz> {
         return format!("{} {}", self.format(NTZ_FSTR).to_string(), abbr);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn verify_dt_utc_ts() {
+        let ts = Utc.with_ymd_and_hms(2024, 10, 30, 16, 08, 42).unwrap();
+        assert_eq!(ts.format_ts(), "2024-10-30 16:08:42 UTC");
+    }
+
+    #[test]
+    fn verify_dt_local_ts() {
+        let ts = Local.with_ymd_and_hms(2024, 10, 30, 16, 08, 42).unwrap();
+
+        // The offset is dependent on the running machine's local timezone, so can't reliably hardcode it.
+        let offset = ts.offset().to_string();
+
+        assert_eq!(ts.format_ts(), format!("2024-10-30 16:08:42 {offset}"));
+    }
+
+    #[test]
+    fn verify_ndt_ts() {
+        use chrono::NaiveDate;
+
+        let ts = NaiveDate::from_ymd_opt(2024, 10, 30)
+            .unwrap()
+            .and_hms_opt(16, 08, 42)
+            .unwrap();
+        assert_eq!(ts.format_ts(), "2024-10-30 16:08:42");
+    }
+
+    #[test]
+    fn verify_dt_tz_ts_gmt() {
+        use chrono_tz::Europe::London;
+
+        let ts = London.from_utc_datetime(
+            &Utc.with_ymd_and_hms(2024, 10, 30, 16, 08, 42)
+                .unwrap()
+                .naive_utc(),
+        );
+
+        assert_eq!(ts.format_ts(), "2024-10-30 16:08:42 GMT");
+    }
+
+    #[test]
+    fn verify_dt_tz_ts_cst() {
+        use chrono_tz::Asia::Chongqing;
+
+        let ts = Chongqing.from_utc_datetime(
+            &Utc.with_ymd_and_hms(2024, 10, 30, 16, 08, 42)
+                .unwrap()
+                .naive_utc(),
+        );
+
+        assert_eq!(ts.format_ts(), "2024-10-31 00:08:42 CST");
+    }
+
+    #[test]
+    fn verify_dt_tz_ts_offset() {
+        use chrono_tz::Asia::Kabul;
+
+        let ts = Kabul.from_utc_datetime(
+            &Utc.with_ymd_and_hms(2024, 10, 30, 16, 08, 42)
+                .unwrap()
+                .naive_utc(),
+        );
+
+        assert_eq!(ts.format_ts(), "2024-10-30 20:38:42 +0430");
+    }
+}

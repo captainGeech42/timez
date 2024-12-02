@@ -50,6 +50,14 @@ impl TimestampString for DateTime<Tz> {
     }
 }
 
+/// Parse a user-provided timestamp value to a chrono object.
+pub(crate) fn parse(value: String) -> Result<DateTime<Utc>, chrono::ParseError> {
+    match NaiveDateTime::parse_from_str(&value, "%Y-%m-%d %H:%M:%S") {
+        Ok(ts) => Ok(ts.and_utc()),
+        Err(e) => Err(e),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -118,5 +126,16 @@ mod tests {
         );
 
         assert_eq!(ts.format_ts(), "2024-10-30 20:38:42 +0430");
+    }
+
+    #[test]
+    fn verify_parse_ok() {
+        let ts = Utc.with_ymd_and_hms(2024, 10, 30, 16, 08, 42).unwrap();
+        assert_eq!(parse("2024-10-30 16:08:42".into()), Ok(ts.clone()))
+    }
+
+    #[test]
+    fn verify_parse_err() {
+        assert!(parse("2024-10-30 16:xyz".into()).is_err())
     }
 }
